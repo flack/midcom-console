@@ -109,7 +109,7 @@ class application extends base_application
             throw new \RuntimeException('Could not open midgard connection: ' . \midcom_connection::get_error_string());
         }
 
-        require_once OPENPSA_PROJECT_BASEDIR . '/vendor/openpsa/midcom/lib/constants.php';
+        require_once OPENPSA_PROJECT_BASEDIR . 'vendor/openpsa/midcom/lib/constants.php';
         $this->_process_dir(MIDCOM_ROOT . '/midcom/exec', 'midcom');
 
         // we retrieve the manifests directly here, because we might get them
