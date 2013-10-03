@@ -98,10 +98,7 @@ class application extends base_application
             'REMOTE_PORT' => '80'
         );
         $_SERVER = array_merge($server_defaults, $_SERVER);
-    }
 
-    private function _add_default_commands()
-    {
         // mgd1 workaround: some methods return fatal errors when called without connection, so we set this up here:
         if (   extension_loaded('midgard')
             && !\midcom_connection::setup(OPENPSA_PROJECT_BASEDIR))
@@ -109,7 +106,17 @@ class application extends base_application
             throw new \RuntimeException('Could not open midgard connection: ' . \midcom_connection::get_error_string());
         }
 
-        require_once OPENPSA_PROJECT_BASEDIR . 'vendor/openpsa/midcom/lib/constants.php';
+        $path = OPENPSA_PROJECT_BASEDIR . 'vendor/openpsa/midcom/lib/constants.php';
+        if (!file_exists($path))
+        {
+            // midcom installed as root package
+            $path = OPENPSA_PROJECT_BASEDIR . 'lib/constants.php';
+        }
+        require_once $path;
+    }
+
+    private function _add_default_commands()
+    {
         $this->_process_dir(MIDCOM_ROOT . '/midcom/exec', 'midcom');
 
         // we retrieve the manifests directly here, because we might get them
