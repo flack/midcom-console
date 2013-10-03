@@ -1,0 +1,30 @@
+{
+    "name": "openpsa/midcom-console",
+    "description": "CLI tools for openpsa/midcom",
+    "keywords": ["midcom", "console"],
+    "license": "LGPL",
+    "authors": [
+        {
+            "name": "Andreas Flack",
+            "email": "flack@contentcontrol-berlin.de",
+            "homepage": "http://www.contentcontrol-berlin.de/"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "pear",
+            "url": "http://pear.php.net"
+        }
+    ],
+   "require": {
+        "symfony/console": "~2.3.0@stable",
+        "openpsa/midcom": "dev-master"
+    },
+    "bin": ["bin/midcom"],
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-0": {
+            "midcom": "src/"
+        }
+    }
+}
