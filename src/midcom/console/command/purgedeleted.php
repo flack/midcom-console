@@ -45,6 +45,9 @@ class purgedeleted extends Command
 
         $output->writeln('Purging entries deleted before ' . gmdate('Y-m-d H:i:s', $handler->get_cutoff()));
 
+        $total_purged = 0;
+        $total_errors = 0;
+        $start = microtime(true);
         foreach ($handler->get_classes() as $mgdschema)
         {
             $output->writeln("\n\nProcessing class <info>{$mgdschema}</info>");
@@ -66,7 +69,10 @@ class purgedeleted extends Command
                 $output->write("  Purged <info>{$purged}</info> deleted objects, <comment>" . $errors . " failures</comment>");
             }
             while ($stats['found'] == $chunk_size);
+            $total_purged += $purged;
+            $total_errors += $errors;
         }
-        $output->writeln("\nDone.");
+        $elapsed = round(microtime(true) - $start, 2);
+        $output->writeln("\n\nPurged <info>{$total_purged}</info> deleted objects in {$elapsed}s, <comment>" . $total_errors . " failures</comment>");
     }
 }
