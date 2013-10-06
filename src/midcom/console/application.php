@@ -80,6 +80,7 @@ class application extends base_application
         {
             include_once OPENPSA_PROJECT_BASEDIR . 'config.inc.php';
         }
+        $GLOBALS['midcom_config_local']['cache_module_content_uncached'] = true;
         if (!defined('OPENPSA2_PREFIX'))
         {
             define('OPENPSA2_PREFIX', '/');
