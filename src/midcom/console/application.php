@@ -14,6 +14,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use midcom\console\command\exec;
 use midcom\console\command\purgedeleted;
+use midcom\console\command\blobdircleanup;
 use midcom\console\command\repligard;
 
 /**
@@ -130,6 +131,7 @@ class application extends base_application
         }
         $this->add(new purgedeleted);
         $this->add(new repligard);
+        $this->add(new blobdircleanup);
     }
 
     private function _process_dir($exec_dir, $component)
