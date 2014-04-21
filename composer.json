@@ -10,13 +10,7 @@
             "homepage": "http://www.contentcontrol-berlin.de/"
         }
     ],
-    "repositories": [
-        {
-            "type": "pear",
-            "url": "http://pear.php.net"
-        }
-    ],
-   "require": {
+    "require": {
         "symfony/console": "~2.3.0@stable",
         "openpsa/midcom": "dev-master"
     },
