@@ -16,9 +16,8 @@
     },
     "bin": ["bin/midcom"],
     "minimum-stability": "dev",
+    "prefer-stable": true,
     "autoload": {
-        "psr-0": {
-            "midcom": "src/"
-        }
+	    "psr-4": { "midcom\\console\\": "src/" }
     }
 }
