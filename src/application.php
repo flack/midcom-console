@@ -108,7 +108,24 @@ class application extends base_application
         {
             include_once OPENPSA_PROJECT_BASEDIR . 'config.inc.php';
         }
+
         $GLOBALS['midcom_config_local']['cache_module_content_uncached'] = true;
+        if (!defined('MIDCOM_ROOT'))
+        {
+            if (file_exists(OPENPSA_PROJECT_BASEDIR . 'lib/midcom.php'))
+            {
+                define('MIDCOM_ROOT', OPENPSA_PROJECT_BASEDIR . 'lib');
+            }
+            else if (file_exists(OPENPSA_PROJECT_BASEDIR . 'vendor/openpsa/midcom/lib/midcom.php'))
+            {
+                define('MIDCOM_ROOT', OPENPSA_PROJECT_BASEDIR . 'vendor/openpsa/midcom/lib');
+            }
+            else
+            {
+                throw new \Exception('Could not find midcom root');
+            }
+        }
+
         if (!defined('OPENPSA2_PREFIX'))
         {
             define('OPENPSA2_PREFIX', '/');
