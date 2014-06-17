@@ -82,7 +82,7 @@ class application extends base_application
             $_SERVER['HTTPS'] = 'on';
         }
 
-        if ($this->backend == 'midard2')
+        if ($this->backend == 'midgard2')
         {
             $config_name = $input->getParameterOption(array('--config', '-c'), null);
             if (!\midcom_connection::setup(OPENPSA_PROJECT_BASEDIR, $config_name))
