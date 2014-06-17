@@ -104,6 +104,14 @@ class application extends base_application
 
     private function _prepare_environment()
     {
+        // under midgard-portable, we need the to register the mgdschema classes before starting midcom,
+        // under mgd1 some methods return fatal errors when called without connection, so we set this up here:
+        if (   $this->backend !== 'midgard2'
+            && !\midcom_connection::setup(OPENPSA_PROJECT_BASEDIR))
+        {
+            throw new \RuntimeException('Could not open midgard connection: ' . \midcom_connection::get_error_string());
+        }
+
         if (file_exists(OPENPSA_PROJECT_BASEDIR . 'config.inc.php'))
         {
             include_once OPENPSA_PROJECT_BASEDIR . 'config.inc.php';
@@ -144,14 +152,6 @@ class application extends base_application
             'REMOTE_PORT' => '80'
         );
         $_SERVER = array_merge($server_defaults, $_SERVER);
-
-        // under midgard-portable, we need the to register the mgdschema classes before starting midcom,
-        // under mgd1 some methods return fatal errors when called without connection, so we set this up here:
-        if (   $this->backend !== 'midgard2'
-            && !\midcom_connection::setup(OPENPSA_PROJECT_BASEDIR))
-        {
-            throw new \RuntimeException('Could not open midgard connection: ' . \midcom_connection::get_error_string());
-        }
     }
 
     private function _add_default_commands()
