@@ -30,23 +30,37 @@ class repligard extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        if (!extension_loaded('midgard2'))
+        $dialog = $this->getHelperSet()->get('dialog');
+        $defaults = array
+        (
+            'username' => null,
+            'password' => null,
+            'host' => 'localhost',
+            'dbtype' => 'MySQL',
+            'dbname' => 'midgard'
+        );
+
+        if (!extension_loaded('midgard'))
         {
-            $output->writeln('<error>midgard2 extension was not found</error>');
-            return;
+            $config = \midgard_connection::get_instance()->config;
+            $defaults['username'] = $config->dbuser;
+            $defaults['password'] = $config->dbpass;
+            $defaults['host'] = $config->host;
+            $defaults['dbtype'] = $config->dbtype;
+            $defaults['dbname'] = $config->database;
         }
 
-        $config = \midgard_connection::get_instance()->config;
-        $username = $config->dbuser;
-        $password = $config->dbpass;
-        if (empty($username))
+        $host = $dialog->ask($output, '<question>DB host:</question> [' . $defaults['host'] . ']', $defaults['host']);
+        $dbtype = $dialog->ask($output, '<question>DB type:</question> [' . $defaults['dbtype'] . ']', $defaults['dbtype']);
+        $dbname = $dialog->ask($output, '<question>DB name:</question> [' . $defaults['dbname'] . ']', $defaults['dbname']);
+
+        if (empty($defaults['username']))
         {
-            $dialog = $this->getHelperSet()->get('dialog');
             $username = $dialog->ask($output, '<question>DB Username:</question> ');
             $password = $dialog->askHiddenResponse($output, '<question>DB Password:</question> ', false);
         }
 
-        $dsn = strtolower($config->dbtype) . ':host=' . $config->host . ';dbname=' . $config->database;
+        $dsn = strtolower($dbtype) . ':host=' . $host . ';dbname=' . $dbname;
         $this->_db = new PDO($dsn, $username, $password);
         $result = $this->_run('SELECT COUNT(guid) FROM repligard WHERE object_action=2');
         $output->writeln('Found <info>' . $result->fetchColumn() . '</info> entries for purged objects');
