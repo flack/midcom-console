@@ -11,6 +11,7 @@ namespace midcom\console\command;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use midgard\introspection\helper;
 use PDO;
 
 /**
@@ -20,7 +21,11 @@ use PDO;
  */
 class repligard extends Command
 {
-    private $_db;
+    /**
+     *
+     * @var PDO
+     */
+    private $db;
 
     protected function configure()
     {
@@ -29,6 +34,27 @@ class repligard extends Command
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        $helper = new helper;
+        try
+        {
+            $this->db = $helper->get_pdo();
+        }
+        catch (\Exception $e)
+        {
+            $this->db = $this->create_connection();
+        }
+
+        $result = $this->_run('SELECT COUNT(guid) FROM repligard WHERE object_action=2');
+        $output->writeln('Found <info>' . $result->fetchColumn() . '</info> entries for purged objects');
+        if ($this->_confirm($output, 'Delete all rows?'))
+        {
+            $result = $this->_run('DELETE FROM repligard WHERE object_action=2', 'exec');
+            $output->writeln('Deleted <comment>' . $result . '</comment> rows');
+        }
+    }
+
+    private function create_connection()
     {
         $dialog = $this->getHelperSet()->get('dialog');
         $defaults = array
@@ -61,14 +87,7 @@ class repligard extends Command
         }
 
         $dsn = strtolower($dbtype) . ':host=' . $host . ';dbname=' . $dbname;
-        $this->_db = new PDO($dsn, $username, $password);
-        $result = $this->_run('SELECT COUNT(guid) FROM repligard WHERE object_action=2');
-        $output->writeln('Found <info>' . $result->fetchColumn() . '</info> entries for purged objects');
-        if ($this->_confirm($output, 'Delete all rows?'))
-        {
-            $result = $this->_run('DELETE FROM repligard WHERE object_action=2', 'exec');
-            $output->writeln('Deleted <comment>' . $result . '</comment> rows');
-        }
+        return new PDO($dsn, $username, $password);
     }
 
     private function _confirm(OutputInterface $output, $question, $default = 'n')
@@ -90,10 +109,10 @@ class repligard extends Command
 
     private function _run($stmt, $command = 'query')
     {
-        $result = $this->_db->$command($stmt);
+        $result = $this->db->$command($stmt);
         if ($result === false)
         {
-            throw new \RuntimeException(implode("\n", $this->_db->errorInfo()));
+            throw new \RuntimeException(implode("\n", $this->db->errorInfo()));
         }
         return $result;
     }
