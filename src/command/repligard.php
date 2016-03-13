@@ -42,7 +42,7 @@ class repligard extends Command
         }
         catch (\Exception $e)
         {
-            $this->db = $this->create_connection();
+            $this->db = $this->create_connection($output);
         }
 
         $result = $this->_run('SELECT COUNT(guid) FROM repligard WHERE object_action=2');
@@ -54,7 +54,7 @@ class repligard extends Command
         }
     }
 
-    private function create_connection()
+    private function create_connection(OutputInterface $output)
     {
         $dialog = $this->getHelperSet()->get('dialog');
         $defaults = array
