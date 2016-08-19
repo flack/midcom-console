@@ -13,6 +13,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\Question;
 
 /**
  * CLI wrapper for midcom-exec calls
@@ -66,9 +67,12 @@ class exec extends Command
         }
         if ($input->getOption('login'))
         {
-            $dialog = $this->getHelperSet()->get('dialog');
-            $username = $dialog->ask($output, '<question>Username:</question> ');
-            $password = $dialog->askHiddenResponse($output, '<question>Password:</question> ', false);
+            $dialog = $this->getHelperSet()->get('question');
+            $username = $dialog->ask($input, $output, new Question('<question>Username:</question> '));
+            $pw_question = new Question('<question>Password:</question> ');
+            $pw_question->setHidden(true);
+            $pw_question->setHiddenFallback(false);
+            $password = $dialog->ask($input, $output, $pw_question);
             if (!\midcom::get('auth')->login($username, $password))
             {
                 throw new \RuntimeException('Login failed');

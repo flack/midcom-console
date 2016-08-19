@@ -11,9 +11,9 @@
         }
     ],
     "require": {
-        "symfony/console": ">=2.3.0",
+        "symfony/console": ">=2.6.0",
         "openpsa/midgard-introspection": "^1.0",
-        "openpsa/midcom": ">=9.0.0-rc.2"
+        "openpsa/midcom": ">=9.0.0"
     },
     "bin": ["bin/midcom"],
     "minimum-stability": "dev",

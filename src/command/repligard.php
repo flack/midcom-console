@@ -13,6 +13,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use midgard\introspection\helper;
 use PDO;
+use Symfony\Component\Console\Question\Question;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
  * Clean up repligard table
@@ -42,21 +44,21 @@ class repligard extends Command
         }
         catch (\Exception $e)
         {
-            $this->db = $this->create_connection($output);
+            $this->db = $this->create_connection($input, $output);
         }
 
         $result = $this->_run('SELECT COUNT(guid) FROM repligard WHERE object_action=2');
         $output->writeln('Found <info>' . $result->fetchColumn() . '</info> entries for purged objects');
-        if ($this->_confirm($output, 'Delete all rows?'))
+        if ($this->_confirm($input, $output, 'Delete all rows?'))
         {
             $result = $this->_run('DELETE FROM repligard WHERE object_action=2', 'exec');
             $output->writeln('Deleted <comment>' . $result . '</comment> rows');
         }
     }
 
-    private function create_connection(OutputInterface $output)
+    private function create_connection(InputInterface $input, OutputInterface $output)
     {
-        $dialog = $this->getHelperSet()->get('dialog');
+        $dialog = $this->getHelperSet()->get('question');
         $defaults = array
         (
             'username' => null,
@@ -76,35 +78,38 @@ class repligard extends Command
             $defaults['dbname'] = $config->database;
         }
 
-        $host = $dialog->ask($output, '<question>DB host:</question> [' . $defaults['host'] . ']', $defaults['host']);
-        $dbtype = $dialog->ask($output, '<question>DB type:</question> [' . $defaults['dbtype'] . ']', $defaults['dbtype']);
-        $dbname = $dialog->ask($output, '<question>DB name:</question> [' . $defaults['dbname'] . ']', $defaults['dbname']);
+        $host = $dialog->ask($input, $output, new Question('<question>DB host:</question> [' . $defaults['host'] . ']', $defaults['host']));
+        $dbtype = $dialog->ask($input, $output, new Question('<question>DB type:</question> [' . $defaults['dbtype'] . ']', $defaults['dbtype']));
+        $dbname = $dialog->ask($input, $output, new Question('<question>DB name:</question> [' . $defaults['dbname'] . ']', $defaults['dbname']));
 
         if (empty($defaults['username']))
         {
-            $username = $dialog->ask($output, '<question>DB Username:</question> ');
-            $password = $dialog->askHiddenResponse($output, '<question>DB Password:</question> ', false);
+            $username = $dialog->ask($input, $output, new Question('<question>DB Username:</question> '));
+            $pw_question = new Question('<question>DB Password:</question> ');
+            $pw_question->setHidden(true);
+            $pw_question->setHiddenFallback(false);
+            $password = $dialog->ask($input, $output, $pw_question);
         }
 
         $dsn = strtolower($dbtype) . ':host=' . $host . ';dbname=' . $dbname;
         return new PDO($dsn, $username, $password);
     }
 
-    private function _confirm(OutputInterface $output, $question, $default = 'n')
+    private function _confirm(InputInterface $input, OutputInterface $output, $question, $default = false)
     {
         $question = '<question>' . $question;
-        $options = array('y', 'n');
-        $default = strtolower($default);
-        foreach ($options as &$option)
+        $options = array(true => 'y', false => 'n');
+        foreach ($options as $value => &$option)
         {
-            if ($option === $default)
+            if ($value == $default)
             {
                 $option = strtoupper($option);
             }
         }
         $question .= ' [' . implode('|', $options). ']</question> ';
-        $dialog = $this->getHelperSet()->get('dialog');
-        return ($dialog->ask($output, $question, $default, $options) === 'y');
+        $question = new ConfirmationQuestion($question, $default);
+        $dialog = $this->getHelperSet()->get('question');
+        return $dialog->ask($input, $output, $question);
     }
 
     private function _run($stmt, $command = 'query')
