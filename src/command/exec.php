@@ -84,7 +84,12 @@ class exec extends Command
         $context->parser = \midcom::get('serviceloader')->load('midcom_core_service_urlparser');
         $context->parser->parse(array('midcom-exec-' . $this->_component, $this->_filename));
 
-        $resolver = new \midcom_core_resolver($context);
+        if (class_exists('midcom_core_urlmethods')) {
+            $resolver = new \midcom_core_urlmethods($context);
+        } else {
+            // openpsa <= 9.1 compat
+            $resolver = new \midcom_core_resolver($context);
+        }
         $resolver->process();
         \midcom::get('auth')->drop_sudo();
     }
