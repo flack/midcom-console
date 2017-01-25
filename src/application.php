@@ -25,20 +25,11 @@ use midcom\console\command\repligard;
 class application extends base_application
 {
     /**
-     * The backend type (midgard1, midgard2, midgard-portable)
-     *
-     * @var string
-     */
-    protected $backend;
-
-    /**
      * @inheritDoc
      */
-    public function __construct($name = 'midcom\console', $version = '9.0beta5+git')
+    public function __construct($name = 'midcom\console', $version = '9.1+git')
     {
         parent::__construct($name, $version);
-
-        $this->detect_backend();
 
         $this->getDefinition()
             ->addOption(new InputOption('--config', '-c', InputOption::VALUE_REQUIRED, 'Config name (mgd2 only)'));
@@ -49,22 +40,6 @@ class application extends base_application
 
         $this->_prepare_environment();
         $this->_add_default_commands();
-    }
-
-    private function detect_backend()
-    {
-        if (extension_loaded('midgard'))
-        {
-            $this->backend = 'midgard';
-        }
-        else if (extension_loaded('midgard2'))
-        {
-            $this->backend = 'midgard2';
-        }
-        else
-        {
-            $this->backend = 'midgard-portable';
-        }
     }
 
     /**
@@ -82,20 +57,6 @@ class application extends base_application
             $_SERVER['HTTPS'] = 'on';
         }
 
-        if ($this->backend == 'midgard2')
-        {
-            $config_name = $input->getParameterOption(array('--config', '-c'), null);
-            if (!\midcom_connection::setup(OPENPSA_PROJECT_BASEDIR, $config_name))
-            {
-                throw new \RuntimeException('Could not open midgard connection ' . $config_name . ': ' . \midcom_connection::get_error_string());
-            }
-            if (OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity())
-            {
-                $config = \midgard_connection::get_instance()->config;
-                $output->writeln('Using <comment>' . $config->dbtype . '</comment> database <info>' . $config->database . '</info>');
-            }
-        }
-
         // This makes sure that existing auth and cache instances get overridden
         \midcom::init();
 
@@ -104,10 +65,8 @@ class application extends base_application
 
     private function _prepare_environment()
     {
-        // under midgard-portable, we need the to register the mgdschema classes before starting midcom,
-        // under mgd1 some methods return fatal errors when called without connection, so we set this up here:
-        if (   $this->backend !== 'midgard2'
-            && !\midcom_connection::setup(OPENPSA_PROJECT_BASEDIR))
+        // we need the to register the mgdschema classes before starting midcom,
+        if (!\midcom_connection::setup(OPENPSA_PROJECT_BASEDIR))
         {
             throw new \RuntimeException('Could not open midgard connection: ' . \midcom_connection::get_error_string());
         }
