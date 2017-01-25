@@ -120,7 +120,7 @@ class application extends base_application
         // we retrieve the manifests directly here, because we might get them
         // from the wrong cache (--servername does not apply here yet)
         $loader = new \midcom_helper__componentloader;
-        foreach ($loader->get_manifests() as $manifest)
+        foreach ($loader->get_manifests(new \midcom_config) as $manifest)
         {
             $exec_dir = dirname(dirname($manifest->filename)) . '/exec';
             $this->_process_dir($exec_dir, $manifest->name);
