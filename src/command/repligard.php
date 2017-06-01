@@ -11,7 +11,7 @@ namespace midcom\console\command;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use midgard\introspection\helper;
+use midgard\portable\storage\connection;
 use PDO;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
@@ -37,10 +37,9 @@ class repligard extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $helper = new helper;
         try
         {
-            $this->db = $helper->get_pdo();
+            $this->db = connection::get_em()->getConnection()->getWrappedConnection();
         }
         catch (\Exception $e)
         {
@@ -58,25 +57,17 @@ class repligard extends Command
 
     private function create_connection(InputInterface $input, OutputInterface $output)
     {
-        $dialog = $this->getHelperSet()->get('question');
+        $config = \midgard_connection::get_instance()->config;
         $defaults = array
         (
-            'username' => null,
-            'password' => null,
-            'host' => 'localhost',
-            'dbtype' => 'MySQL',
-            'dbname' => 'midgard'
+            'username' => $config->dbuser,
+            'password' => $config->dbpass,
+            'host' => $config->host,
+            'dbtype' => $config->dbtype,
+            'dbname' => $config->database
         );
 
-        if (!extension_loaded('midgard'))
-        {
-            $config = \midgard_connection::get_instance()->config;
-            $defaults['username'] = $config->dbuser;
-            $defaults['password'] = $config->dbpass;
-            $defaults['host'] = $config->host;
-            $defaults['dbtype'] = $config->dbtype;
-            $defaults['dbname'] = $config->database;
-        }
+        $dialog = $this->getHelperSet()->get('question');
 
         $host = $dialog->ask($input, $output, new Question('<question>DB host:</question> [' . $defaults['host'] . ']', $defaults['host']));
         $dbtype = $dialog->ask($input, $output, new Question('<question>DB type:</question> [' . $defaults['dbtype'] . ']', $defaults['dbtype']));
