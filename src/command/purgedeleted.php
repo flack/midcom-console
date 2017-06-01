@@ -37,8 +37,7 @@ class purgedeleted extends Command
         $pw_question->setHidden(true);
         $pw_question->setHiddenFallback(false);
         $password = $dialog->ask($input, $output, $pw_question);
-        if (!\midcom::get('auth')->login($username, $password))
-        {
+        if (!\midcom::get('auth')->login($username, $password)) {
             throw new \RuntimeException('Login failed');
         }
         \midcom::get('auth')->require_admin_user();
@@ -52,27 +51,22 @@ class purgedeleted extends Command
         $total_purged = 0;
         $total_errors = 0;
         $start = microtime(true);
-        foreach ($handler->get_classes() as $mgdschema)
-        {
+        foreach ($handler->get_classes() as $mgdschema) {
             $output->writeln("\n\nProcessing class <info>{$mgdschema}</info>");
             $purged = 0;
             $errors = 0;
-            do
-            {
+            do {
                 $stats = $handler->process_class($mgdschema, $chunk_size);
-                foreach ($stats['errors'] as $error)
-                {
+                foreach ($stats['errors'] as $error) {
                     $output->writeln('  <error>' . $error . '</error>');
                 }
-                if ($purged > 0)
-                {
+                if ($purged > 0) {
                     $output->write("\x0D");
                 }
                 $purged += $stats['purged'];
                 $errors += count($stats['errors']);
                 $output->write("  Purged <info>{$purged}</info> deleted objects, <comment>" . $errors . " failures</comment>");
-            }
-            while ($stats['found'] == $chunk_size);
+            } while ($stats['found'] == $chunk_size);
             $total_purged += $purged;
             $total_errors += $errors;
         }

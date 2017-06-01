@@ -41,40 +41,30 @@ class exec extends Command
     {
         $get = $input->getArgument('get');
 
-        if (is_array($get))
-        {
-            foreach ($get as $data)
-            {
+        if (is_array($get)) {
+            foreach ($get as $data) {
                 $input_data = explode('=', $data);
-                if (sizeof($input_data) == 1)
-                {
+                if (sizeof($input_data) == 1) {
                     $_GET[] = $input_data;
-                }
-                else if (sizeof($input_data) == 2)
-                {
+                } elseif (sizeof($input_data) == 2) {
                     $_GET[$input_data[0]] = $input_data[1];
-                }
-                else
-                {
+                } else {
                     throw new \RuntimeException('Could not parse input ' . $data);
                 }
             }
         }
 
-        if ($output->getVerbosity() > OutputInterface::VERBOSITY_NORMAL)
-        {
+        if ($output->getVerbosity() > OutputInterface::VERBOSITY_NORMAL) {
             $output->writeln('Running ' . $this->_component . '/' . $this->_filename);
         }
-        if ($input->getOption('login'))
-        {
+        if ($input->getOption('login')) {
             $dialog = $this->getHelperSet()->get('question');
             $username = $dialog->ask($input, $output, new Question('<question>Username:</question> '));
             $pw_question = new Question('<question>Password:</question> ');
             $pw_question->setHidden(true);
             $pw_question->setHiddenFallback(false);
             $password = $dialog->ask($input, $output, $pw_question);
-            if (!\midcom::get('auth')->login($username, $password))
-            {
+            if (!\midcom::get('auth')->login($username, $password)) {
                 throw new \RuntimeException('Login failed');
             }
         }

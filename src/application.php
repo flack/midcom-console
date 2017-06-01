@@ -52,8 +52,7 @@ class application extends base_application
         $_SERVER['SERVER_PORT'] = $input->getParameterOption(array('--port', '-p'), null);
         $_SERVER['REMOTE_PORT'] = $_SERVER['SERVER_PORT'];
 
-        if ($_SERVER['SERVER_PORT'] == 443)
-        {
+        if ($_SERVER['SERVER_PORT'] == 443) {
             $_SERVER['HTTPS'] = 'on';
         }
 
@@ -66,40 +65,30 @@ class application extends base_application
     private function _prepare_environment()
     {
         // we need the to register the mgdschema classes before starting midcom,
-        if (!\midcom_connection::setup(OPENPSA_PROJECT_BASEDIR))
-        {
+        if (!\midcom_connection::setup(OPENPSA_PROJECT_BASEDIR)) {
             throw new \RuntimeException('Could not open midgard connection: ' . \midcom_connection::get_error_string());
         }
 
-        if (file_exists(OPENPSA_PROJECT_BASEDIR . 'config.inc.php'))
-        {
+        if (file_exists(OPENPSA_PROJECT_BASEDIR . 'config.inc.php')) {
             include_once OPENPSA_PROJECT_BASEDIR . 'config.inc.php';
         }
 
         $GLOBALS['midcom_config_local']['cache_module_content_uncached'] = true;
-        if (!defined('MIDCOM_ROOT'))
-        {
-            if (file_exists(OPENPSA_PROJECT_BASEDIR . 'lib/midcom.php'))
-            {
+        if (!defined('MIDCOM_ROOT')) {
+            if (file_exists(OPENPSA_PROJECT_BASEDIR . 'lib/midcom.php')) {
                 define('MIDCOM_ROOT', OPENPSA_PROJECT_BASEDIR . 'lib');
-            }
-            else if (file_exists(OPENPSA_PROJECT_BASEDIR . 'vendor/openpsa/midcom/lib/midcom.php'))
-            {
+            } elseif (file_exists(OPENPSA_PROJECT_BASEDIR . 'vendor/openpsa/midcom/lib/midcom.php')) {
                 define('MIDCOM_ROOT', OPENPSA_PROJECT_BASEDIR . 'vendor/openpsa/midcom/lib');
-            }
-            else
-            {
+            } else {
                 throw new \Exception('Could not find midcom root');
             }
         }
 
-        if (!defined('OPENPSA2_PREFIX'))
-        {
+        if (!defined('OPENPSA2_PREFIX')) {
             define('OPENPSA2_PREFIX', '/');
         }
 
-        $server_defaults = array
-        (
+        $server_defaults = array(
             'HTTP_HOST' => 'localhost',
             'SERVER_NAME' => 'localhost',
             'SERVER_SOFTWARE' => __CLASS__,
@@ -120,8 +109,7 @@ class application extends base_application
         // we retrieve the manifests directly here, because we might get them
         // from the wrong cache (--servername does not apply here yet)
         $loader = new \midcom_helper__componentloader;
-        foreach ($loader->get_manifests(new \midcom_config) as $manifest)
-        {
+        foreach ($loader->get_manifests(new \midcom_config) as $manifest) {
             $exec_dir = dirname(dirname($manifest->filename)) . '/exec';
             $this->_process_dir($exec_dir, $manifest->name);
         }
@@ -132,10 +120,8 @@ class application extends base_application
 
     private function _process_dir($exec_dir, $component)
     {
-        if (is_dir($exec_dir))
-        {
-            foreach (glob($exec_dir . '/*.php') as $file)
-            {
+        if (is_dir($exec_dir)) {
+            foreach (glob($exec_dir . '/*.php') as $file) {
                 $command = substr(basename($file), 0, -4);
                 $this->add(new exec($component . ':' . $command));
             }

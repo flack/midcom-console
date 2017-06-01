@@ -37,19 +37,15 @@ class repligard extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        try
-        {
+        try {
             $this->db = connection::get_em()->getConnection()->getWrappedConnection();
-        }
-        catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             $this->db = $this->create_connection($input, $output);
         }
 
         $result = $this->_run('SELECT COUNT(guid) FROM repligard WHERE object_action=2');
         $output->writeln('Found <info>' . $result->fetchColumn() . '</info> entries for purged objects');
-        if ($this->_confirm($input, $output, 'Delete all rows?'))
-        {
+        if ($this->_confirm($input, $output, 'Delete all rows?')) {
             $result = $this->_run('DELETE FROM repligard WHERE object_action=2', 'exec');
             $output->writeln('Deleted <comment>' . $result . '</comment> rows');
         }
@@ -58,8 +54,7 @@ class repligard extends Command
     private function create_connection(InputInterface $input, OutputInterface $output)
     {
         $config = \midgard_connection::get_instance()->config;
-        $defaults = array
-        (
+        $defaults = array(
             'username' => $config->dbuser,
             'password' => $config->dbpass,
             'host' => $config->host,
@@ -73,8 +68,7 @@ class repligard extends Command
         $dbtype = $dialog->ask($input, $output, new Question('<question>DB type:</question> [' . $defaults['dbtype'] . ']', $defaults['dbtype']));
         $dbname = $dialog->ask($input, $output, new Question('<question>DB name:</question> [' . $defaults['dbname'] . ']', $defaults['dbname']));
 
-        if (empty($defaults['username']))
-        {
+        if (empty($defaults['username'])) {
             $username = $dialog->ask($input, $output, new Question('<question>DB Username:</question> '));
             $pw_question = new Question('<question>DB Password:</question> ');
             $pw_question->setHidden(true);
@@ -90,10 +84,8 @@ class repligard extends Command
     {
         $question = '<question>' . $question;
         $options = array(true => 'y', false => 'n');
-        foreach ($options as $value => &$option)
-        {
-            if ($value == $default)
-            {
+        foreach ($options as $value => &$option) {
+            if ($value == $default) {
                 $option = strtoupper($option);
             }
         }
@@ -106,8 +98,7 @@ class repligard extends Command
     private function _run($stmt, $command = 'query')
     {
         $result = $this->db->$command($stmt);
-        if ($result === false)
-        {
+        if ($result === false) {
             throw new \RuntimeException(implode("\n", $this->db->errorInfo()));
         }
         return $result;
