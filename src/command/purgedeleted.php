@@ -37,10 +37,10 @@ class purgedeleted extends Command
         $pw_question->setHidden(true);
         $pw_question->setHiddenFallback(false);
         $password = $dialog->ask($input, $output, $pw_question);
-        if (!\midcom::get('auth')->login($username, $password)) {
+        if (!\midcom::get()->auth->login($username, $password)) {
             throw new \RuntimeException('Login failed');
         }
-        \midcom::get('auth')->require_admin_user();
+        \midcom::get()->auth->require_admin_user();
 
         $handler = new \midcom_cron_purgedeleted;
         $handler->set_cutoff((int) $input->getOption('days'));

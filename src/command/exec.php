@@ -64,14 +64,14 @@ class exec extends Command
             $pw_question->setHidden(true);
             $pw_question->setHiddenFallback(false);
             $password = $dialog->ask($input, $output, $pw_question);
-            if (!\midcom::get('auth')->login($username, $password)) {
+            if (!\midcom::get()->auth->login($username, $password)) {
                 throw new \RuntimeException('Login failed');
             }
         }
-        \midcom::get('auth')->request_sudo($this->_component);
+        \midcom::get()->auth->request_sudo($this->_component);
 
         $context = \midcom_core_context::get();
-        $context->parser = \midcom::get('serviceloader')->load('midcom_core_service_urlparser');
+        $context->parser = \midcom::get()->serviceloader->load('midcom_core_service_urlparser');
         $context->parser->parse(array('midcom-exec-' . $this->_component, $this->_filename));
 
         if (class_exists('midcom_core_urlmethods')) {
@@ -81,6 +81,6 @@ class exec extends Command
             $resolver = new \midcom_core_resolver($context);
         }
         $resolver->process();
-        \midcom::get('auth')->drop_sudo();
+        \midcom::get()->auth->drop_sudo();
     }
 }
