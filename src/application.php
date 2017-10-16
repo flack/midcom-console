@@ -89,8 +89,8 @@ class application extends base_application
         }
 
         $server_defaults = array(
-            'HTTP_HOST' => 'localhost',
-            'SERVER_NAME' => 'localhost',
+            'HTTP_HOST' => __FILE__,
+            'SERVER_NAME' => __FILE__,
             'SERVER_SOFTWARE' => __CLASS__,
             'HTTP_USER_AGENT' => $this->getName(),
             'SERVER_PORT' => '80',
