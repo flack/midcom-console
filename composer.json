@@ -2,7 +2,7 @@
     "name": "openpsa/midcom-console",
     "description": "CLI tools for openpsa/midcom",
     "keywords": ["midcom", "console"],
-    "license": "LGPL",
+    "license": "LGPL-2.1-or-later",
     "authors": [
         {
             "name": "Andreas Flack",
