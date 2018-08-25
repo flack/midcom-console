@@ -15,6 +15,7 @@ use midgard\portable\storage\connection;
 use PDO;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
+use midgard\portable\api\mgdobject;
 
 /**
  * Clean up repligard table
@@ -32,7 +33,7 @@ class repligard extends Command
     protected function configure()
     {
         $this->setName('midcom:repligard')
-            ->setDescription('Remove purged objects from repligard table');
+            ->setDescription('Clean up repligard table');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -44,10 +45,24 @@ class repligard extends Command
         }
 
         $result = $this->_run('SELECT COUNT(guid) FROM repligard WHERE object_action=2');
-        $output->writeln('Found <info>' . $result->fetchColumn() . '</info> entries for purged objects');
-        if ($this->_confirm($input, $output, 'Delete all rows?')) {
-            $result = $this->_run('DELETE FROM repligard WHERE object_action=2', 'exec');
-            $output->writeln('Deleted <comment>' . $result . '</comment> rows');
+        if ($result->fetchColumn() > 0) {
+            $output->writeln('Found <info>' . $result->fetchColumn() . '</info> entries for purged objects');
+            if ($this->_confirm($input, $output, 'Delete all rows?')) {
+                $result = $this->_run('DELETE FROM repligard WHERE object_action=2', 'exec');
+                $output->writeln('Deleted <comment>' . $result . '</comment> rows');
+            }
+        }
+
+        $result = $this->_run('SELECT DISTINCT typename FROM repligard');
+        foreach ($result->fetchAll(PDO::FETCH_COLUMN) as $typename) {
+            if (!is_a($typename, mgdobject::class, true)) {
+                $result = $this->_run('SELECT COUNT(guid) FROM repligard WHERE typename="' . $typename . '"');
+                $output->writeln('Found <info>' . $result->fetchColumn() . '</info> entries for nonexistent type <comment>' . $typename . '</comment>');
+                if ($this->_confirm($input, $output, 'Delete all rows?')) {
+                    $result = $this->_run('DELETE FROM repligard WHERE typename="' . $typename . '"', 'exec');
+                    $output->writeln('Deleted <comment>' . $result . '</comment> rows');
+                }
+            }
         }
     }
 
