@@ -15,7 +15,7 @@ use midgard\portable\storage\connection;
 use PDO;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
-use midgard\portable\api\mgdobject;
+use midgard\portable\api\dbobject;
 
 /**
  * Clean up repligard table
@@ -55,7 +55,7 @@ class repligard extends Command
 
         $result = $this->_run('SELECT DISTINCT typename FROM repligard');
         foreach ($result->fetchAll(PDO::FETCH_COLUMN) as $typename) {
-            if (!is_a($typename, mgdobject::class, true)) {
+            if (!is_a($typename, dbobject::class, true)) {
                 $result = $this->_run('SELECT COUNT(guid) FROM repligard WHERE typename="' . $typename . '"');
                 $output->writeln('Found <info>' . $result->fetchColumn() . '</info> entries for nonexistent type <comment>' . $typename . '</comment>');
                 if ($this->_confirm($input, $output, 'Delete all rows?')) {
