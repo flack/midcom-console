@@ -44,9 +44,9 @@ class repligard extends Command
             $this->db = $this->create_connection($input, $output);
         }
 
-        $result = $this->_run('SELECT COUNT(guid) FROM repligard WHERE object_action=2');
-        if ($result->fetchColumn() > 0) {
-            $output->writeln('Found <info>' . $result->fetchColumn() . '</info> entries for purged objects');
+        $result = $this->_run('SELECT COUNT(guid) FROM repligard WHERE object_action=2')->fetchColumn();
+        if ($result > 0) {
+            $output->writeln('Found <info>' . $result . '</info> entries for purged objects');
             if ($this->_confirm($input, $output, 'Delete all rows?')) {
                 $result = $this->_run('DELETE FROM repligard WHERE object_action=2', 'exec');
                 $output->writeln('Deleted <comment>' . $result . '</comment> rows');
