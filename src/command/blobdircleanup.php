@@ -70,6 +70,9 @@ class blobdircleanup extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $dir = $input->getOption("dir");
+        if (empty($dir)) {
+            $dir = \midgard_connection::get_instance()->config->blobdir;
+        }
         if (!is_dir($dir)) {
             $output->writeln("<comment>Unable to detect blobdir</comment>");
             return;
