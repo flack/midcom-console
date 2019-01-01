@@ -139,6 +139,10 @@ class blobdircleanup extends Command
 
         $this->cleanup_corrupted($output, $this->findings['corrupted']);
 
+        foreach ($this->findings['orphaned'] as $file) {
+            $this->cleanup_file($output, $file);
+        }
+
         $output->writeln("<comment>Done</comment>");
     }
 }
