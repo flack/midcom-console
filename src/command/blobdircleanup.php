@@ -22,16 +22,21 @@ use Symfony\Component\Console\Output\OutputInterface;
 class blobdircleanup extends Command
 {
     /**
-     *
      * @var int
      */
     private $_file_counter = 0;
 
     /**
-     *
      * @var string
      */
     private $_dir = "";
+
+    private $dry = false;
+
+    private $findings = [
+        'corrupted' => [],
+        'orphaned' => []
+    ];
 
     protected function configure()
     {
@@ -44,27 +49,68 @@ class blobdircleanup extends Command
     public function check_dir($outerDir)
     {
         $outerDir = rtrim($outerDir, "/");
-        $dirs = array_diff(scandir($outerDir), array(".", ".."));
-        $files = array();
+        $dirs = array_diff(scandir($outerDir), [".", ".."]);
         foreach ($dirs as $d) {
-            if (is_dir($outerDir."/".$d)) {
-                $files = array_merge($files, $this->check_dir($outerDir."/".$d));
+            if (is_dir($outerDir . "/" . $d)) {
+                $this->check_dir($outerDir . "/" . $d);
             } else {
                 // got something
-                $size = filesize($outerDir."/".$d);
-                if ($size == 0) {
-                    $files[] = $outerDir."/".$d;
+                $file = $outerDir . "/" . $d;
+                if (filesize($file) == 0) {
+                    $this->findings['corrupted'][] = $file;
+                } elseif ($this->get_attachment($file) === false) {
+                    $this->findings['orphaned'][] = $file;
                 }
                 $this->_file_counter++;
             }
         }
-
-        return $files;
     }
 
     private function _determine_location($path)
     {
         return ltrim(str_replace($this->_dir, "", $path), "/");
+    }
+
+    private function get_attachment($file)
+    {
+        $location = $this->_determine_location($file);
+        // get attachments
+        $qb = \midcom_db_attachment::new_query_builder();
+        $qb->add_constraint("location", "=", $location);
+        $attachments = $qb->execute();
+        if (count($attachments) === 0) {
+            return false;
+        }
+        if (count($attachments) === 1) {
+            return $attachments[0];
+        }
+        throw new \midcom_error('Multiple attachments share location ' . $location);
+    }
+
+    private function cleanup_corrupted(OutputInterface $output, array $files)
+    {
+        $i = 0;
+        foreach ($files as $file) {
+            $i++;
+            // cleanup file
+            $output->writeln($i . ") " . $file);
+            $this->cleanup_file($output, $file);
+
+            if ($att = $this->get_attachment($file)) {
+                if (!$this->dry) {
+                    $stat = $att->purge();
+                    $output->writeln(($stat) ? "<info>Purge OK</info>" : "<comment>Purge FAILED, reason: " . \midcom_connection::get_error_string() . "</comment>");
+                }
+            }
+        }
+    }
+
+    private function cleanup_file(OutputInterface $output, $file)
+    {
+        if (!$this->dry) {
+            $stat = unlink($file);
+            $output->writeln(($stat) ? "<info>Cleanup OK</info>" : "<comment>Cleanup FAILED</comment>");
+        }
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -78,93 +124,21 @@ class blobdircleanup extends Command
             return;
         }
         $this->_dir = $dir;
-        $is_dry = $input->getOption("dry");
-        if ($is_dry) {
+        $this->dry = $input->getOption("dry");
+        if ($this->dry) {
             $output->writeln("<comment>Running in dry mode!</comment>");
         }
 
         $output->writeln("Start scanning dir: <comment>" . $dir . "</comment>");
 
-        $files = $this->check_dir($dir);
+        $this->check_dir($dir);
 
         $output->writeln("Scanned <info>" . $this->_file_counter . "</info> files");
-        $output->writeln("Found <info>" . count($files) . "</info> corrupted files:");
-        if (count($files) == 0) {
-            $output->writeln("<comment>Done</comment>");
-            return;
-        }
+        $output->writeln("Found <info>" . count($this->findings['corrupted']) . "</info> corrupted files:");
+        $output->writeln("Found <info>" . count($this->findings['orphaned']) . "</info> orphaned files:");
 
-        $att_locations = array();
-        $i = 0;
-        foreach ($files as $file) {
-            $i++;
-            // cleanup file
-            $output->writeln($i . ") " . $file);
-            $info = "";
-            if (!$is_dry) {
-                $stat = unlink($file);
-                $info = ($stat) ? "<info>Cleanup OK</info>" : "<comment>Cleanup FAILED</comment>";
-            }
-            if (!empty($info)) {
-                $output->writeln($info);
-            }
-            //  determine attachment location
-            $location = $this->_determine_location($file);
-            $att_locations[] = $location;
-        }
+        $this->cleanup_corrupted($output, $this->findings['corrupted']);
 
-        // get attachments
-        $qb = \midcom_db_attachment::new_query_builder();
-        $qb->add_constraint("location", "IN", $att_locations);
-        $attachments = $qb->execute();
-        $output->writeln("Found <info>" . count($attachments) . "</info> affected attachment objects");
-        if (count($attachments) == 0) {
-            $output->writeln("<comment>Done</comment>");
-            return;
-        }
-
-        // get parent guids
-        $guids = array();
-        $i = 0;
-        foreach ($attachments as $att) {
-            $i++;
-            $output->writeln($i . ") " . $att->guid);
-            $guids[] = $att->get_parent_guid_uncached();
-
-            // cleanup attachment
-            $info = "";
-            if (!$is_dry) {
-                $stat = $att->purge();
-                $info = ($stat) ? "<info>Purge OK</info>" : "<comment>Purge FAILED, reason: " . \midcom_connection::get_error_string() . "</comment>";
-            }
-            if (!empty($info)) {
-                $output->writeln($info);
-            }
-        }
-        $guids = array_unique($guids);
-
-        $output->writeln("Found <info>" . count($guids) . "</info> affected parent objects");
-        if (count($guids) == 0) {
-            $output->writeln("<comment>Done</comment>");
-            return;
-        }
-        $i = 0;
-        foreach ($guids as $guid) {
-            $i++;
-            $output->writeln($i . ") " . $guid);
-
-            try {
-                $obj = \midgard_object_class::get_object_by_guid($guid);
-            } catch (midgard_error_exception $e) {
-                continue;
-            }
-
-            // show info
-            $ref = \midcom_helper_reflector::get($obj);
-            $object_label = $ref->get_object_label($obj);
-            $output->writeln("Class: " . get_class($obj));
-            $output->writeln("Label: " . $object_label);
-        }
         $output->writeln("<comment>Done</comment>");
     }
 }
