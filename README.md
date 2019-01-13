@@ -1,3 +1,7 @@
+Note: As of version 9.5+, the console functionality has been merged into the main repo. This repo is here only to serve older installations 
+
+---------------------
+
 midcom-console
 ==============
 
